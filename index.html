@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Para mi dulce niña</title>
+<meta name="description" content="Una carta hecha de luz.">
+<meta name="theme-color" content="#05070f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Parisienne&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<canvas id="dust" aria-hidden="true"></canvas>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="bar bar-top" aria-hidden="true"></div>
+<div class="bar bar-bottom" aria-hidden="true"></div>
+
+<audio id="track" src="musica.mp3" loop preload="auto"></audio>
+
+<!-- Portada -->
+<section id="gate" class="gate">
+  <div class="gate-spark" aria-hidden="true"></div>
+  <p class="gate-kicker">para ti</p>
+  <h1 class="gate-title">Algo que no me sale<br>en voz alta</h1>
+  <p class="gate-note">Súbele el volumen. Dura un minuto.</p>
+  <button id="startBtn" class="cta" type="button">Empezar</button>
+</section>
+
+<!-- Controles -->
+<div id="hud" class="hud" hidden>
+  <button id="muteBtn" class="ghost" type="button" aria-pressed="true">♪ música</button>
+  <div id="dots" class="dots" aria-hidden="true"></div>
+  <button id="skipBtn" class="ghost" type="button">saltar</button>
+</div>
+<p class="credit" aria-hidden="true">&#9834; Amor de Cine — Humbe</p>
+<p id="hint" class="hint" hidden aria-hidden="true">toca para seguir</p>
+
+<!-- Carta -->
+<main id="letter" class="letter" hidden>
+  <article class="sheet">
+    <h2 class="sheet-title">Mi dulce niña</h2>
+
+    <p>No soy bueno con esto, así que lo hice con luz: es lo más cerca que llegué a decírtelo bien.</p>
+
+    <p>Te quiero. Tal cual, en presente, sin adornos y sin que nadie me lo pregunte. La otra palabra todavía no la uso, no porque me falten ganas, sino porque la quiero decir cuando me quede chica en el pecho — y ese día vas a ser la primera en enterarte.</p>
+
+    <p>Soy un tonto contigo. Se me sale la broma antes que el cariño, y luego me doy cuenta de que dije justo lo que no era. Cuando te dije fea, mi boca iba a mil y mi cabeza andaba en otra parte; lo que pienso es exactamente lo opuesto, y lo pienso todos los días: no hay nadie más bonita en todo el Tec, ni en todo lo que sigue después del Tec.</p>
+
+    <p>A veces creo que te molesto. Que escribo de más, que aparezco de más. Y hoy, que estás enojada, lo pienso el doble. Pero no se me quitan las ganas de estar ahí: mañana, el lunes, el día que ya no estés enojada, y todos los que vienen detrás de ese.</p>
+
+    <p class="sheet-close">Eres mi dulce niña. Eso no se me mueve aunque me aviente mil tonterías la boca.</p>
+
+    <p class="sign">— tu tonto</p>
+
+    <div class="play">
+      <p class="play-invite">El cielo de arriba se queda contigo.<br>Tócalo donde quieras y ponle tus estrellas.</p>
+      <p id="playNote" class="play-note" hidden>ahí está: tu propia constelación ✧</p>
+    </div>
+
+    <button id="againBtn" class="ghost again" type="button">verlo otra vez</button>
+  </article>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
