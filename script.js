@@ -13,14 +13,16 @@
 
   const NTFY_TOPIC = 'Alerta-Aldair-Frappes-928471';
 
-  function ping(title, body, tags) {
+  const MARCA = 'ESTRELLAS:';         // así reconoce el visor los cielos
+
+  function ping(title, body, tags, prioridad) {
     try {
       fetch('https://ntfy.sh/' + NTFY_TOPIC, {
         method: 'POST',
         headers: {
           'Title': title,            // solo ASCII en los headers
           'Tags': tags || 'sparkles',
-          'Priority': 'default'
+          'Priority': prioridad || 'default'
         },
         body: body,
         keepalive: true,
@@ -52,7 +54,8 @@
     { t: 'y hoy lo pienso el doble', hold: 4400, it: true },
     { t: 'aun así me quiero quedar', hold: 4800 },
     { t: 'mañana, el lunes,\ny el día que ya no estés enojada', hold: 5800, it: true, scale: .9 },
-    { t: 'Mi dulce niña', hold: 99999, scale: 1.5, script: true }
+    /* la última sube tantito para no pelearse con las instrucciones */
+    { t: 'Mi dulce niña', hold: 99999, scale: 1.5, script: true, dy: -.13 }
   ];
 
   /* ---------- 3. lienzos y medidas ------------------------ */
@@ -132,10 +135,39 @@
   function guardarSuyas() {
     try {
       localStorage.setItem(LLAVE, JSON.stringify(
-        suyas.slice(-140).map(s => ({ rx: +s.rx.toFixed(4), ry: +s.ry.toFixed(4), r: +s.r.toFixed(2) }))
+        suyas.slice(-260).map(s => ({ rx: +s.rx.toFixed(4), ry: +s.ry.toFixed(4), r: +s.r.toFixed(2) }))
       ));
     } catch (_) {}
+    publicarPronto();
   }
+
+  /* manda su cielo al topic para poder verlo desde cielo.html.
+     Va con prioridad mínima para no estar sonando el teléfono. */
+  let publicarTmr = null;
+
+  function publicarPronto() {
+    clearTimeout(publicarTmr);
+    publicarTmr = setTimeout(publicarCielo, 4000);
+  }
+
+  function publicarCielo() {
+    clearTimeout(publicarTmr);
+    publicarTmr = null;
+    let lista = suyas.map(s => [+s.rx.toFixed(3), +s.ry.toFixed(3), +s.r.toFixed(1)]);
+    let cuerpo = MARCA + JSON.stringify({ n: suyas.length, s: lista });
+    /* ntfy corta los mensajes largos: si no cabe, mandamos las últimas */
+    while (cuerpo.length > 3600 && lista.length > 8) {
+      lista = lista.slice(-Math.floor(lista.length * .75));
+      cuerpo = MARCA + JSON.stringify({ n: suyas.length, s: lista });
+    }
+    ping('Su cielo', cuerpo, 'star2', 'min');
+  }
+
+  /* si cierra la página con estrellas sin mandar, las mandamos ya */
+  window.addEventListener('pagehide', () => { if (publicarTmr) publicarCielo(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && publicarTmr) publicarCielo();
+  });
 
   let avisadaConstelacion = false;
 
@@ -154,6 +186,15 @@
       const p = document.getElementById('playNote');
       if (p) { p.hidden = false; }
     }
+  }
+
+  function borrarEstrellas() {
+    suyas = [];
+    avisadaConstelacion = false;
+    try { localStorage.removeItem(LLAVE); } catch (_) {}
+    const p = document.getElementById('playNote');
+    if (p) p.hidden = true;
+    publicarCielo();                     // el visor también se entera
   }
 
   function pintarCielo(t) {
@@ -336,7 +377,7 @@
     c.font = estilo + peso + ' ' + size + 'px ' + familia;
 
     const lh = size * 1.3;
-    const y0 = H * .5 - ((lineas.length - 1) * lh) / 2;
+    const y0 = H * (.5 + (opc.dy || 0)) - ((lineas.length - 1) * lh) / 2;
     lineas.forEach((l, i) => c.fillText(l, W / 2, y0 + i * lh));
 
     const img = c.getImageData(0, 0, off.width, off.height).data;
@@ -393,6 +434,11 @@
 
   /* escribir una frase: el cometa entra por la izquierda y la va dejando */
   function escribir(pts, yaMismo) {
+    /* si el cometa venía a media frase, se detiene: si no, se encima con la nueva */
+    cometa.activo = false;
+    cometa.pend = null;
+    cometa.i = 0;
+
     soltarTodo();
     pts.sort((a, b) => a.x - b.x);
 
@@ -548,6 +594,8 @@
   const muteBtn = document.getElementById('muteBtn');
   const skipBtn = document.getElementById('skipBtn');
   const againBtn = document.getElementById('againBtn');
+  const wipeBtn = document.getElementById('wipeBtn');
+  const guia = document.getElementById('guia');
 
   let escenaActual = -1;
   let avanzar = null;
@@ -602,8 +650,9 @@
     document.body.classList.add('reading');
     requestAnimationFrame(() => letter.classList.add('show'));
     /* la frase se queda arriba en el cielo; la carta espera un scroll abajo */
-    hint.textContent = 'desliza ↓';
-    setTimeout(() => { if (terminada && window.scrollY < 40) hint.classList.add('show'); }, 2000);
+    hint.classList.remove('show');
+    guia.hidden = false;
+    setTimeout(() => { if (terminada && window.scrollY < 40) guia.classList.add('show'); }, 1600);
     ping('Llego al final', 'Ya llego al final de la carta — ' + ahora(), 'heart');
   }
 
@@ -613,7 +662,8 @@
     const u = Math.min(1, window.scrollY / (H * .75));
     dustCv.style.opacity = String(1 - u * .96);
     starCv.style.opacity = String(1 - u * .35);
-    if (window.scrollY > 40) hint.classList.remove('show');
+    if (window.scrollY > 40) { hint.classList.remove('show'); guia.classList.remove('show'); }
+    else if (terminada) guia.classList.add('show');
   }, { passive: true });
 
   function empezar() {
@@ -661,7 +711,14 @@
     abrirCarta();
   });
 
+  wipeBtn.addEventListener('click', () => {
+    borrarEstrellas();
+    wipeBtn.textContent = 'listo, cielo limpio';
+    setTimeout(() => { wipeBtn.textContent = 'borrar mis estrellas'; }, 2600);
+  });
+
   againBtn.addEventListener('click', () => {
+    guia.classList.remove('show');
     letter.classList.remove('show');
     document.body.classList.remove('reading');
     window.scrollTo(0, 0);
@@ -681,7 +738,9 @@
   let arrastrando = false, ultimoTrazo = 0;
 
   function enElCielo(ev) {
-    return !ev.target.closest('.sheet, button, a');
+    const t = ev.target;
+    if (!t || typeof t.closest !== 'function') return true;
+    return !t.closest('.sheet, button, a');
   }
 
   document.addEventListener('pointerdown', ev => {

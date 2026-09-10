@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Su cielo</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Parisienne&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f6efe4; --soft:rgba(246,239,228,.7); --faint:rgba(246,239,228,.38);
+    --gold:#ffd9a0; --rose:#ffb3c6;
+    --serif:"Cormorant Garamond",Georgia,serif;
+    --script:"Parisienne",cursive;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; background:
+      radial-gradient(110% 80% at 20% 10%, rgba(96,72,150,.26) 0%, rgba(5,7,15,0) 60%),
+      radial-gradient(90% 70% at 80% 80%, rgba(150,64,96,.2) 0%, rgba(5,7,15,0) 58%),
+      #05070f;
+    color:var(--ink); font-family:var(--serif);
+    display:flex; flex-direction:column;
+  }
+  header{
+    padding:1.1rem clamp(1rem,4vw,2rem) .8rem;
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:.6rem 1.2rem;
+    border-bottom:1px solid rgba(246,239,228,.08);
+  }
+  h1{ margin:0; font-family:var(--script); font-weight:400; font-size:2rem; color:var(--gold); }
+  .meta{ font-size:.95rem; color:var(--soft); font-style:italic; }
+  .meta b{ color:var(--ink); font-style:normal; font-weight:400; }
+  .spacer{ flex:1 1 auto; }
+  button{
+    font-family:var(--serif); font-size:.85rem; letter-spacing:.14em; text-transform:lowercase;
+    color:var(--faint); background:rgba(246,239,228,.03);
+    border:1px solid rgba(246,239,228,.16); border-radius:999px;
+    padding:.45rem 1.1rem; cursor:pointer; transition:color .3s,border-color .3s;
+  }
+  button:hover{ color:var(--ink); border-color:rgba(255,217,160,.5); }
+
+  main{ flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
+  .lienzo{
+    position:relative; flex:1 1 auto; min-height:52vh;
+    margin:clamp(.7rem,2vw,1.2rem); border-radius:12px; overflow:hidden;
+    border:1px solid rgba(246,239,228,.07);
+    background:radial-gradient(120% 90% at 50% 40%, rgba(24,30,64,.5), rgba(3,4,10,.9));
+  }
+  canvas{ display:block; width:100%; height:100%; }
+  .vacio{
+    position:absolute; inset:0; display:grid; place-items:center; text-align:center;
+    padding:2rem; color:var(--soft); font-style:italic; font-size:1.05rem; line-height:1.7;
+  }
+  .vacio[hidden]{ display:none; }   /* si no, el display:grid le gana al hidden */
+  .nota{
+    margin:0 clamp(.7rem,2vw,1.2rem) 1.2rem;
+    font-size:.8rem; color:rgba(246,239,228,.3); font-style:italic; line-height:1.6;
+  }
+  .error{ color:var(--rose); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Su cielo</h1>
+  <p class="meta" id="meta">cargando…</p>
+  <span class="spacer"></span>
+  <button id="recargar" type="button">actualizar</button>
+</header>
+
+<main>
+  <div class="lienzo">
+    <canvas id="cv"></canvas>
+    <div class="vacio" id="vacio" hidden>Todavía no ha puesto ninguna estrella.<br>En cuanto toque su cielo, aparece aquí.</div>
+  </div>
+
+  <p class="nota">
+    Se actualiza solo cada 20 segundos. Un cielo se guarda unas 12 horas;
+    si quieres conservar alguno, toma captura.
+  </p>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const TOPIC = 'Alerta-Aldair-Frappes-928471';
+  const MARCA = 'ESTRELLAS:';
+
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const meta = document.getElementById('meta');
+  const vacio = document.getElementById('vacio');
+
+  let suyas = [], fondo = [], cuando = null, W = 0, H = 0;
+
+  function medir(){
+    const r = cv.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = Math.max(1, Math.floor(W * dpr));
+    cv.height = Math.max(1, Math.floor(H * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fondo = Array.from({length: Math.round(Math.min(260, W * H / 5200))}, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.1 + .2, p: Math.random() * 6.283, f: .4 + Math.random() * 1.5
+    }));
+  }
+
+  function pintar(t){
+    ctx.clearRect(0, 0, W, H);
+
+    for (const s of fondo){
+      ctx.globalAlpha = .18 + .3 * Math.abs(Math.sin(t * .0009 * s.f + s.p));
+      ctx.fillStyle = '#cfe0ff';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
+    }
+
+    if (suyas.length){
+      ctx.globalAlpha = .16; ctx.strokeStyle = '#ffb3c6'; ctx.lineWidth = .7;
+      ctx.beginPath();
+      suyas.forEach((s, i) => {
+        const x = s[0] * W, y = s[1] * H;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.stroke();
+
+      for (let i = 0; i < suyas.length; i++){
+        const s = suyas[i];
+        const x = s[0] * W, y = s[1] * H, r = s[2];
+        const tw = .72 + .28 * Math.sin(t * .0018 + i);
+        ctx.globalAlpha = tw;
+        ctx.fillStyle = '#ffe3ee';
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+        ctx.globalAlpha = .15 * tw;
+        ctx.beginPath(); ctx.arc(x, y, r * 5, 0, 6.283); ctx.fill();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(pintar);
+  }
+
+  const hora = ms => new Date(ms * 1000).toLocaleString('es-MX', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+  });
+
+  async function traer(){
+    meta.classList.remove('error');
+    try {
+      const r = await fetch('https://ntfy.sh/' + TOPIC + '/json?poll=1&since=all', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const texto = await r.text();
+
+      const mensajes = texto.split('\n').filter(Boolean).map(l => {
+        try { return JSON.parse(l); } catch (_) { return null; }
+      }).filter(m => m && m.event === 'message');
+
+      /* el cielo más reciente que haya mandado */
+      let ultimo = null;
+      for (const m of mensajes) {
+        if (typeof m.message === 'string' && m.message.startsWith(MARCA)) ultimo = m;
+      }
+
+      if (ultimo){
+        try {
+          const datos = JSON.parse(ultimo.message.slice(MARCA.length));
+          suyas = Array.isArray(datos.s) ? datos.s : [];
+          cuando = ultimo.time;
+          meta.innerHTML = suyas.length
+            ? '<b>' + datos.n + '</b> estrellas · la última vez que lo tocó: <b>' + hora(cuando) + '</b>'
+            : 'borró su cielo · <b>' + hora(cuando) + '</b>';
+        } catch (_) { suyas = []; meta.textContent = 'llegó un cielo que no se pudo leer'; }
+      } else {
+        suyas = [];
+        meta.textContent = 'todavía no hay ningún cielo guardado';
+      }
+      vacio.hidden = suyas.length > 0;
+
+    } catch (e) {
+      meta.textContent = 'no se pudo cargar (' + e.message + ')';
+      meta.classList.add('error');
+    }
+  }
+
+  document.getElementById('recargar').addEventListener('click', traer);
+  window.addEventListener('resize', medir);
+
+  medir();
+  requestAnimationFrame(pintar);
+  traer();
+  setInterval(traer, 20000);
+})();
+</script>
+</body>
+</html>

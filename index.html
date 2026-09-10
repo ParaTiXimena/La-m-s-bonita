@@ -39,6 +39,17 @@
   <button id="skipBtn" class="ghost" type="button">saltar</button>
 </div>
 <p class="credit" aria-hidden="true">&#9834; Amor de Cine — Humbe</p>
+
+<!-- Instrucciones del final -->
+<div id="guia" class="guia" hidden>
+  <p class="guia-title">Este cielo se queda contigo</p>
+  <ul class="guia-list">
+    <li><b>Toca</b> donde quieras: cada toque deja una estrella.</li>
+    <li><b>Arrastra</b> el dedo y va quedando un rastro de estrellitas.</li>
+    <li>Se conectan solas y se guardan aquí, aunque cierres la página.</li>
+  </ul>
+  <p class="guia-down">Y abajo te escribí algo — <b>desliza</b> ↓</p>
+</div>
 <p id="hint" class="hint" hidden aria-hidden="true">toca para seguir</p>
 
 <!-- Carta -->
@@ -59,8 +70,16 @@
     <p class="sign">— tu tonto</p>
 
     <div class="play">
-      <p class="play-invite">El cielo de arriba se queda contigo.<br>Tócalo donde quieras y ponle tus estrellas.</p>
+      <p class="play-invite">Ah, y el cielo de aquí arriba se queda contigo.</p>
+      <ol class="play-steps">
+        <li>Sube tantito, a donde están las estrellas.</li>
+        <li><b>Cada toque (o clic) deja una estrella nueva.</b></li>
+        <li>Si arrastras el dedo, va quedando un rastro de estrellitas.</li>
+        <li>Se unen solas con una línea: esa es tu constelación.</li>
+      </ol>
+      <p class="play-invite">Se guardan solas, así que van a seguir ahí la próxima vez que entres. Y si te arrepientes, se borran y empiezas de cero.</p>
       <p id="playNote" class="play-note" hidden>ahí está: tu propia constelación ✧</p>
+      <button id="wipeBtn" class="ghost wipe" type="button">borrar mis estrellas</button>
     </div>
 
     <button id="againBtn" class="ghost again" type="button">verlo otra vez</button>
